@@ -33,8 +33,9 @@ func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	fmt.Fprintln(os.Stdout, "TESTE => Chamando o ServeHTTP")
 	fmt.Fprintln(os.Stdout, "X-Slot recebido:", req.Header.Get("X-Slot"))
 
-	if header := req.Header.Get("X-Slot"); header != "" {
+	if req.Header.Get("X-Slot") != "" {
 		bg.next.ServeHTTP(rw, req)
+		return
 	}
 
 	bg.proxy.ServeHTTP(rw, req)
