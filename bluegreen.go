@@ -28,8 +28,12 @@ type BlueGreen struct {
 }
 
 func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	fmt.Fprintln(os.Stdout, "HEADERS ORIGINAIS: ", req.Header)
+	// fmt.Fprintln(os.Stdout, "HEADERS ORIGINAIS: ", req.Header)
 	fmt.Fprintln(os.Stdout, "TESTE => Chamando o ServeHTTP")
+	fmt.Fprintln(os.Stdout, "X-Slot recebido:", req.Header.Get("X-Slot"))
+	if req.Header.Get("X-Slot") == "1" {
+		fmt.Fprintln(os.Stdout, "Segunda passagem")
+	}
 	bg.proxy.ServeHTTP(rw, req)
 }
 
