@@ -65,9 +65,13 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 			tenant := pr.In.URL.Query().Get("tenant")
 
-			fmt.Fprintf(os.Stdout, "Tenant => %s\n", tenant)
+			switch tenant {
+			case "456":
+				pr.Out.Header.Set("X-Slot", "1")
+			default:
+				pr.Out.Header.Set("X-Slot", "2")
+			}
 
-			pr.Out.Header.Set("X-Slot", "1")
 			pr.Out.Header.Set("X-Forwarded-Proto", "https")
 			pr.Out.Header.Set("X-Forwarded-Port", "443")
 			pr.SetXForwarded()
