@@ -32,10 +32,13 @@ func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// fmt.Fprintln(os.Stdout, "HEADERS ORIGINAIS: ", req.Header)
 	fmt.Fprintln(os.Stdout, "TESTE => Chamando o ServeHTTP")
 	fmt.Fprintln(os.Stdout, "X-Slot recebido:", req.Header.Get("X-Slot"))
-	if req.Header.Get("X-Slot") == "1" {
-		fmt.Fprintln(os.Stdout, "Segunda passagem")
+
+	if header := req.Header.Get("X-Slot"); header != "" {
+		bg.next.ServeHTTP(rw, req)
 	}
+
 	bg.proxy.ServeHTTP(rw, req)
+
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
@@ -59,7 +62,6 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 			},
 		},
 		Rewrite: func(pr *httputil.ProxyRequest) {
-
 			pr.SetURL(traefikTarget)
 			pr.Out.Host = pr.In.Host
 
