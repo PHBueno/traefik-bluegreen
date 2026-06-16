@@ -28,6 +28,7 @@ type BlueGreen struct {
 }
 
 func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	fmt.Fprintln(os.Stdout, "HEADERS ORIGINAIS: ", req.Header)
 	fmt.Fprintln(os.Stdout, "TESTE => Chamando o ServeHTTP")
 	bg.proxy.ServeHTTP(rw, req)
 }
@@ -48,6 +49,11 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	log.Println("Sucesso para acessar traefik")
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
+			pr.Out.Header.Del("X-Forwarded-Server")
+			pr.Out.Header.Del("X-Forwarded-Host")
+			pr.Out.Header.Del("X-Forwarded-Port")
+			pr.Out.Header.Del("X-Forwarded-Proto")
+
 			pr.SetURL(traefikTarget)
 			pr.Out.Host = pr.In.Host
 			pr.Out.Header.Set("X-Slot", "1")
