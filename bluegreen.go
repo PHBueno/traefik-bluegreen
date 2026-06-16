@@ -31,6 +31,7 @@ func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+	fmt.Println("TESTE => ")
 	if config.RedisAddress == "" {
 		return nil, fmt.Errorf("Redis Address is not set!")
 	}
