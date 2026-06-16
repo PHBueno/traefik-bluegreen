@@ -43,7 +43,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		return nil, fmt.Errorf("Redis Address is not set!")
 	}
 
-	traefikTarget, err := url.Parse("http://traefik.traefik-controller.svc.cluster.local:80")
+	traefikTarget, err := url.Parse("https://traefik.traefik-controller.svc.cluster.local:443")
 
 	if err != nil {
 		log.Fatal(err)
