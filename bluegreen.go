@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 )
 
 type Config struct {
@@ -25,13 +26,13 @@ type BlueGreen struct {
 func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.Header.Set("X-Slot", "1")
 
-	fmt.Println("TESTE => ", req)
+	fmt.Fprintln(os.Stdout, "Chamando o ServeHTTP")
 
 	bg.next.ServeHTTP(rw, req)
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	fmt.Println("TESTE => ")
+	fmt.Fprintln(os.Stdout, "Plugin iniciado com sucesso")
 	if config.RedisAddress == "" {
 		return nil, fmt.Errorf("Redis Address is not set!")
 	}
