@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 )
 
 type Config struct {
@@ -27,10 +28,12 @@ type BlueGreen struct {
 }
 
 func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	fmt.Fprintln(os.Stdout, "TESTE => Chamando o ServeHTTP")
 	bg.proxy.ServeHTTP(rw, req)
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+	fmt.Fprintln(os.Stdout, "Iniciando contexto")
 	if config.RedisAddress == "" {
 		return nil, fmt.Errorf("Redis Address is not set!")
 	}
