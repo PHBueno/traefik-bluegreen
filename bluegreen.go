@@ -53,11 +53,6 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	log.Println("Sucesso para acessar traefik")
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
-			pr.Out.Header.Del("X-Forwarded-Server")
-			pr.Out.Header.Del("X-Forwarded-Host")
-			pr.Out.Header.Del("X-Forwarded-Port")
-			pr.Out.Header.Del("X-Forwarded-Proto")
-			pr.Out.Header.Del("X-Forwarded-For")
 
 			pr.SetURL(traefikTarget)
 			pr.Out.Host = pr.In.Host
@@ -66,9 +61,6 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 			pr.Out.Header.Set("X-Forwarded-Proto", "https")
 			pr.Out.Header.Set("X-Forwarded-Port", "443")
 			pr.SetXForwarded()
-
-			dump, _ := httputil.DumpRequestOut(pr.Out, true)
-			fmt.Fprintf(os.Stdout, "TESTE Dump => %s", string(dump))
 
 			fmt.Fprintf(os.Stdout,
 				"Encaminhando requisição para o Traefik -> Host: %s | Headers: %s\n",
