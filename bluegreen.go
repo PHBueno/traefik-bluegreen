@@ -34,7 +34,7 @@ func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	fmt.Fprintln(os.Stdout, "X-Slot recebido:", req.Header.Get("X-Slot"))
 
 	if req.Header.Get("X-Slot") != "" {
-		bg.next.ServeHTTP(rw, req)
+		http.NotFound(rw, req)
 		return
 	}
 
