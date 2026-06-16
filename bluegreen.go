@@ -53,6 +53,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 			pr.Out.Header.Del("X-Forwarded-Host")
 			pr.Out.Header.Del("X-Forwarded-Port")
 			pr.Out.Header.Del("X-Forwarded-Proto")
+			pr.Out.Header.Del("X-Forwarded-For")
 
 			pr.SetURL(traefikTarget)
 			pr.Out.Host = pr.In.Host
