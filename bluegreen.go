@@ -1,4 +1,4 @@
-package bluegreen
+package traefik_bluegreen
 
 import (
 	"context"
