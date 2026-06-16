@@ -2,6 +2,7 @@ package traefik_bluegreen
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -52,6 +53,11 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 	log.Println("Sucesso para acessar traefik")
 	proxy := &httputil.ReverseProxy{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
 		Rewrite: func(pr *httputil.ProxyRequest) {
 
 			pr.SetURL(traefikTarget)
