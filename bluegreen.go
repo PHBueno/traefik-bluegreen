@@ -3,8 +3,10 @@ package traefik_bluegreen
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
-	"os"
+	"net/http/httputil"
+	"net/url"
 )
 
 type Config struct {
@@ -19,24 +21,44 @@ func CreateConfig() *Config {
 }
 
 type BlueGreen struct {
-	next http.Handler
-	name string
+	next  http.Handler
+	proxy *httputil.ReverseProxy
+	name  string
 }
 
 func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	req.Header.Set("X-Slot", "1")
-	fmt.Fprintln(os.Stdout, "TESTE => ", req)
-	fmt.Fprintln(os.Stdout, "Chamando o ServeHTTP")
-
-	bg.next.ServeHTTP(rw, req)
+	bg.proxy.ServeHTTP(rw, req)
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
 	if config.RedisAddress == "" {
 		return nil, fmt.Errorf("Redis Address is not set!")
 	}
+
+	traefikTarget, err := url.Parse("http://traefik.traefik-controller.svc.cluster.local:80")
+
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	log.Println("Sucesso para acessar traefik")
+	proxy := &httputil.ReverseProxy{
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			pr.SetURL(traefikTarget)
+			pr.Out.Host = pr.In.Host
+			pr.Out.Header.Set("X-Slot", "1")
+			pr.SetXForwarded()
+
+			log.Printf(
+				"Encaminhando requisição para o Traefik -> Host: %s | X-Slot: %s",
+				pr.Out.Host, pr.Out.Header.Get("X-Slot"),
+			)
+		},
+	}
 	return &BlueGreen{
-		next: next,
-		name: name,
+		next:  next,
+		proxy: proxy,
+		name:  name,
 	}, nil
 }
