@@ -64,7 +64,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 			pr.SetXForwarded()
 
 			dump, _ := httputil.DumpRequestOut(pr.Out, true)
-			fmt.Println(string(dump))
+			fmt.Println("TESTE => ", string(dump))
 
 			fmt.Fprintf(os.Stdout,
 				"Encaminhando requisição para o Traefik -> Host: %s | Headers: %s\n",
