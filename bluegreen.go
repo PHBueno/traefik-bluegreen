@@ -29,10 +29,9 @@ type BlueGreen struct {
 }
 
 func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	// fmt.Fprintln(os.Stdout, "HEADERS ORIGINAIS: ", req.Header)
-	fmt.Fprintln(os.Stdout, "TESTE => Chamando o ServeHTTP")
 	fmt.Fprintln(os.Stdout, "X-Slot recebido:", req.Header.Get("X-Slot"))
 
+	// Evita loop
 	if req.Header.Get("X-Slot") != "" {
 		http.NotFound(rw, req)
 		return
@@ -43,7 +42,6 @@ func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	fmt.Fprintln(os.Stdout, "Iniciando contexto")
 	if config.RedisAddress == "" {
 		return nil, fmt.Errorf("Redis Address is not set!")
 	}
@@ -55,7 +53,6 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		return nil, err
 	}
 
-	log.Println("Sucesso para acessar traefik")
 	proxy := &httputil.ReverseProxy{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
