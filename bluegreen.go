@@ -56,7 +56,10 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 			pr.SetURL(traefikTarget)
 			pr.Out.Host = pr.In.Host
+
 			pr.Out.Header.Set("X-Slot", "1")
+			pr.Out.Header.Set("X-Forwarded-Proto", "https")
+			pr.Out.Header.Set("X-Forwarded-Port", "443")
 			pr.SetXForwarded()
 
 			fmt.Fprintf(os.Stdout,
