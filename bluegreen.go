@@ -25,7 +25,7 @@ type BlueGreen struct {
 func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.Header.Set("X-Slot", "1")
 
-	fmt.Println(req)
+	fmt.Println("TESTE => ", req)
 
 	bg.next.ServeHTTP(rw, req)
 }
