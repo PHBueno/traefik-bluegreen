@@ -53,7 +53,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 			pr.Out.Header.Set("X-Slot", "1")
 			pr.SetXForwarded()
 
-			log.Printf(
+			fmt.Fprintf(os.Stdout,
 				"Encaminhando requisição para o Traefik -> Host: %s | X-Slot: %s",
 				pr.Out.Host, pr.Out.Header.Get("X-Slot"),
 			)
