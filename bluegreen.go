@@ -55,8 +55,8 @@ func rewriteProxy(traefikTarget *url.URL) func(*httputil.ProxyRequest) {
 			pr.Out.Header.Set("X-Slot", "2")
 		}
 
-		pr.Out.Header.Set("X-Forwarded-Proto", "https")
-		pr.Out.Header.Set("X-Forwarded-Port", "443")
+		// pr.Out.Header.Set("X-Forwarded-Proto", "https")
+		// pr.Out.Header.Set("X-Forwarded-Port", "443")
 		pr.SetXForwarded()
 
 		fmt.Fprintf(os.Stdout,
@@ -86,6 +86,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		},
 		Rewrite: rewriteProxy(traefikTarget),
 	}
+
 	return &BlueGreen{
 		next:  next,
 		proxy: proxy,
