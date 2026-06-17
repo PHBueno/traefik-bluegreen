@@ -41,6 +41,31 @@ func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 }
 
+func rewriteProxy(traefikTarget *url.URL) func(*httputil.ProxyRequest) {
+	return func(pr *httputil.ProxyRequest) {
+		pr.SetURL(traefikTarget)
+		pr.Out.Host = pr.In.Host
+
+		tenant := pr.In.URL.Query().Get("tenant")
+
+		switch tenant {
+		case "456":
+			pr.Out.Header.Set("X-Slot", "1")
+		default:
+			pr.Out.Header.Set("X-Slot", "2")
+		}
+
+		pr.Out.Header.Set("X-Forwarded-Proto", "https")
+		pr.Out.Header.Set("X-Forwarded-Port", "443")
+		pr.SetXForwarded()
+
+		fmt.Fprintf(os.Stdout,
+			"Encaminhando requisição para o Traefik -> Host: %s | Headers: %s\n",
+			pr.Out.Host, pr.Out.Header,
+		)
+	}
+}
+
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
 	if config.RedisAddress == "" {
 		return nil, fmt.Errorf("Redis Address is not set!")
@@ -59,28 +84,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 				InsecureSkipVerify: true,
 			},
 		},
-		Rewrite: func(pr *httputil.ProxyRequest) {
-			pr.SetURL(traefikTarget)
-			pr.Out.Host = pr.In.Host
-
-			tenant := pr.In.URL.Query().Get("tenant")
-
-			switch tenant {
-			case "456":
-				pr.Out.Header.Set("X-Slot", "1")
-			default:
-				pr.Out.Header.Set("X-Slot", "2")
-			}
-
-			pr.Out.Header.Set("X-Forwarded-Proto", "https")
-			pr.Out.Header.Set("X-Forwarded-Port", "443")
-			pr.SetXForwarded()
-
-			fmt.Fprintf(os.Stdout,
-				"Encaminhando requisição para o Traefik -> Host: %s | Headers: %s\n",
-				pr.Out.Host, pr.Out.Header,
-			)
-		},
+		Rewrite: rewriteProxy(traefikTarget),
 	}
 	return &BlueGreen{
 		next:  next,
