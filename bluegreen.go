@@ -9,6 +9,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+
+	"github.com/PHBueno/traefik-bluegreen/pkg"
 )
 
 type Config struct {
@@ -20,25 +22,6 @@ type Config struct {
 
 func CreateConfig() *Config {
 	return &Config{}
-}
-
-type BlueGreen struct {
-	next  http.Handler
-	proxy *httputil.ReverseProxy
-	name  string
-}
-
-func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	fmt.Fprintln(os.Stdout, "X-Slot recebido:", req.Header.Get("X-Slot"))
-
-	// Evita loop
-	if req.Header.Get("X-Slot") != "" {
-		http.NotFound(rw, req)
-		return
-	}
-
-	bg.proxy.ServeHTTP(rw, req)
-
 }
 
 func rewriteProxy(traefikTarget *url.URL) func(*httputil.ProxyRequest) {
@@ -55,8 +38,6 @@ func rewriteProxy(traefikTarget *url.URL) func(*httputil.ProxyRequest) {
 			pr.Out.Header.Set("X-Slot", "2")
 		}
 
-		// pr.Out.Header.Set("X-Forwarded-Proto", "https")
-		// pr.Out.Header.Set("X-Forwarded-Port", "443")
 		pr.SetXForwarded()
 
 		fmt.Fprintf(os.Stdout,
@@ -87,9 +68,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		Rewrite: rewriteProxy(traefikTarget),
 	}
 
-	return &BlueGreen{
-		next:  next,
-		proxy: proxy,
-		name:  name,
-	}, nil
+	bg := pkg.New(next, proxy, name)
+
+	return bg, nil
 }
