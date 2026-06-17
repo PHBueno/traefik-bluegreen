@@ -4,11 +4,11 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strconv"
 
 	"github.com/PHBueno/traefik-bluegreen/pkg"
 )
@@ -24,29 +24,6 @@ func CreateConfig() *Config {
 	return &Config{}
 }
 
-func rewriteProxy(traefikTarget *url.URL) func(*httputil.ProxyRequest) {
-	return func(pr *httputil.ProxyRequest) {
-		pr.SetURL(traefikTarget)
-		pr.Out.Host = pr.In.Host
-
-		tenant := pr.In.URL.Query().Get("tenant")
-
-		switch tenant {
-		case "456":
-			pr.Out.Header.Set("X-Slot", "1")
-		default:
-			pr.Out.Header.Set("X-Slot", "2")
-		}
-
-		pr.SetXForwarded()
-
-		fmt.Fprintf(os.Stdout,
-			"Encaminhando requisição para o Traefik -> Host: %s | Headers: %s\n",
-			pr.Out.Host, pr.Out.Header,
-		)
-	}
-}
-
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
 	if config.RedisAddress == "" {
 		return nil, fmt.Errorf("Redis Address is not set!")
@@ -55,9 +32,19 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	traefikTarget, err := url.Parse("https://traefik.traefik-controller.svc.cluster.local:443")
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
 		return nil, err
 	}
+
+	database, _ := strconv.Atoi(config.RedisDataBase)
+	new_redis, err := pkg.NewRedisConnection(config.RedisAddress, config.RedisPassword, database)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return nil, err
+	}
+
+	traefik := &pkg.Traefik{URL: traefikTarget}
 
 	proxy := &httputil.ReverseProxy{
 		Transport: &http.Transport{
@@ -65,10 +52,18 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 				InsecureSkipVerify: true,
 			},
 		},
-		Rewrite: rewriteProxy(traefikTarget),
+		Rewrite: traefik.RewriteProxy(new_redis),
 	}
 
 	bg := pkg.New(next, proxy, name)
 
 	return bg, nil
 }
+
+// Se a requisição não vier com app-id, deve ser encaminhado para o um Default;
+// Se não vier tenant, tem que buscar pela app Default;
+// definir uma espécie de Default Backend;
+
+// Cenários onde não vier o app-id;
+// Cenários onde não vier o tenant;
+// Cenários onde não vier nem o app-id e nem o tenant-id;
