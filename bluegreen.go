@@ -8,7 +8,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"strconv"
 
 	"github.com/PHBueno/traefik-bluegreen/pkg"
 )
@@ -36,14 +35,6 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		return nil, err
 	}
 
-	database, _ := strconv.Atoi(config.RedisDataBase)
-	new_redis, err := pkg.NewRedisConnection(config.RedisAddress, config.RedisPassword, database)
-
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return nil, err
-	}
-
 	traefik := &pkg.Traefik{URL: traefikTarget}
 
 	proxy := &httputil.ReverseProxy{
@@ -52,7 +43,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 				InsecureSkipVerify: true,
 			},
 		},
-		Rewrite: traefik.RewriteProxy(new_redis),
+		Rewrite: traefik.RewriteProxy(),
 	}
 
 	bg := pkg.New(next, proxy, name)

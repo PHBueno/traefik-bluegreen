@@ -5,15 +5,13 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-
-	"github.com/redis/go-redis/v9"
 )
 
 type Traefik struct {
 	URL *url.URL
 }
 
-func (t *Traefik) RewriteProxy(redisConn *redis.Client) func(*httputil.ProxyRequest) {
+func (t *Traefik) RewriteProxy() func(*httputil.ProxyRequest) {
 
 	return func(pr *httputil.ProxyRequest) {
 		pr.SetURL(t.URL)
