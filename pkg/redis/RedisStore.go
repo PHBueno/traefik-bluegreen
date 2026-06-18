@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"sync"
 )
 
@@ -84,15 +85,21 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 	HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
 
 	reader := bufio.NewReader(conn)
+	resp, err := reader.ReadString('\n')
+	d := resp[:len(resp)-2]
+	arrayLenth, _ := strconv.ParseInt(d, 10, 64)
 
-	respType, err := reader.ReadByte()
+	for i := range arrayLenth {
+		resp, _ = reader.ReadString('\n')
+		fmt.Fprintf(os.Stdout, "LINHA REDIS [%d]: %s\n", i, resp[:len(resp)-2])
+	}
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "[REDIS CONNECTION] => erro na resposta do redis: ", err)
 		return nil, err
 	}
 
-	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => MENSAGEM DO REDIS: ", respType)
+	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => MENSAGEM DO REDIS: ", resp)
 
 	rs.updateCache(tenant, app, "1")
 
