@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sync"
 )
 
-// Conexão com o Redis
+var (
+	store *RedisStore
+	once  sync.Once
+)
 
 type RedisStore struct {
 	address string
@@ -29,12 +33,17 @@ type TenantSlot struct {
 }
 
 func NewConnection(address string, port string) *RedisStore {
-	fmt.Fprintln(os.Stdout, "[REDISSTORE] => Criando NewRedisConnection")
-	return &RedisStore{
-		address: address,
-		port:    port,
-		cache:   make(map[string]map[string]string),
-	}
+	once.Do(
+		func() {
+			fmt.Fprintln(os.Stdout, "[ONCE] => Executando Once")
+			store = &RedisStore{
+				address: address,
+				port:    port,
+				cache:   make(map[string]map[string]string),
+			}
+		},
+	)
+	return store
 
 }
 
