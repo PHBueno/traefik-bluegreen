@@ -11,7 +11,7 @@ import (
 
 type Proxy struct {
 	ProxyURL  *url.URL
-	RedisConn *redis.RedisConn
+	RedisConn *redis.RedisStore
 }
 
 func (p *Proxy) RewriteProxy() func(*httputil.ProxyRequest) {
@@ -21,12 +21,15 @@ func (p *Proxy) RewriteProxy() func(*httputil.ProxyRequest) {
 		pr.Out.Host = pr.In.Host
 
 		tenant := pr.In.URL.Query().Get("tenant")
+		app := pr.In.Header.Get("X-App-Slug")
+
+		slot := p.RedisConn.GetSlot(tenant, app)
 
 		switch tenant {
 		case "456":
-			pr.Out.Header.Set("X-Slot", "1")
+			pr.Out.Header.Set("X-Slot", slot.Slot)
 		default:
-			pr.Out.Header.Set("X-Slot", "2")
+			pr.Out.Header.Set("X-Slot", slot.Slot)
 		}
 
 		pr.SetXForwarded()
