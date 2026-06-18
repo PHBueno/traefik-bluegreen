@@ -25,4 +25,5 @@ func (r *RedisConn) NewConnection() (*net.Conn, error) {
 
 	fmt.Fprintln(os.Stdout, "connection established with Redis")
 	return &conn, nil
+
 }
