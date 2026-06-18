@@ -85,14 +85,14 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 
 	reader := bufio.NewReader(conn)
 
-	resp, err := reader.ReadString('\n')
+	respType, err := reader.ReadByte()
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "[REDIS CONNECTION] => erro na resposta do redis: ", err)
 		return nil, err
 	}
 
-	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => MENSAGEM DO REDIS: ", resp)
+	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => MENSAGEM DO REDIS: ", respType)
 
 	rs.updateCache(tenant, app, "1")
 
