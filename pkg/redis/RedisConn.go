@@ -9,14 +9,11 @@ import (
 // Conexão com o Redis
 
 type RedisConn struct {
-	Address string
-	Port    string
+	connection net.Conn
 }
 
-func (r *RedisConn) NewConnection() (*net.Conn, error) {
-	connectionString := r.Address + ":" + r.Port
-
-	conn, err := net.Dial("tcp", connectionString)
+func NewConnection(address string, port string) (*RedisConn, error) {
+	conn, err := net.Dial("tcp", net.JoinHostPort(address, port))
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -24,6 +21,6 @@ func (r *RedisConn) NewConnection() (*net.Conn, error) {
 	}
 
 	fmt.Fprintln(os.Stdout, "connection established with Redis")
-	return &conn, nil
+	return &RedisConn{connection: conn}, nil
 
 }

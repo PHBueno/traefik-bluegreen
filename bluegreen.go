@@ -20,6 +20,10 @@ type Config struct {
 	RedisDataBase string
 }
 
+func init() {
+	fmt.Println("PLUGIN INIT")
+}
+
 func CreateConfig() *Config {
 	return &Config{}
 }
@@ -29,6 +33,8 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		return nil, fmt.Errorf("Redis Address is not set!")
 	}
 
+	fmt.Fprintf(os.Stdout, "NAME => %s", name)
+
 	traefikTarget, err := url.Parse("https://traefik.traefik-controller.svc.cluster.local:443")
 
 	if err != nil {
@@ -36,15 +42,17 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		return nil, err
 	}
 
-	redis := &redis.RedisConn{Address: config.RedisAddress, Port: config.RedisPort}
-
-	_, err = redis.NewConnection()
+	redisConn, err := redis.NewConnection(config.RedisAddress, config.RedisPort)
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		return nil, err
 	}
 
-	traefik := &pkg.Traefik{URL: traefikTarget}
+	targetProxy := &pkg.Proxy{
+		ProxyURL:  traefikTarget,
+		RedisConn: redisConn,
+	}
 
 	proxy := &httputil.ReverseProxy{
 		Transport: &http.Transport{
@@ -52,7 +60,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 				InsecureSkipVerify: true,
 			},
 		},
-		Rewrite: traefik.RewriteProxy(),
+		Rewrite: targetProxy.RewriteProxy(),
 	}
 
 	bg := pkg.New(next, proxy, name)

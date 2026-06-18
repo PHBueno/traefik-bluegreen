@@ -5,16 +5,19 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+
+	"github.com/PHBueno/traefik-bluegreen/pkg/redis"
 )
 
-type Traefik struct {
-	URL *url.URL
+type Proxy struct {
+	ProxyURL  *url.URL
+	RedisConn *redis.RedisConn
 }
 
-func (t *Traefik) RewriteProxy() func(*httputil.ProxyRequest) {
+func (p *Proxy) RewriteProxy() func(*httputil.ProxyRequest) {
 
 	return func(pr *httputil.ProxyRequest) {
-		pr.SetURL(t.URL)
+		pr.SetURL(p.ProxyURL)
 		pr.Out.Host = pr.In.Host
 
 		tenant := pr.In.URL.Query().Get("tenant")
