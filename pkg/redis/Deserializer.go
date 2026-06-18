@@ -35,7 +35,7 @@ func deserializeArray(rd *bufio.Reader) error {
 		return err
 	}
 
-	for i := 0; i <= returnBytesToInt/2; i++ {
+	for i := 0; i < returnBytesToInt/2; i++ {
 		// Ignora tamanho do Campo
 		rd.ReadString('\n')
 
