@@ -64,7 +64,7 @@ func Deserializer(rd io.Reader) error {
 
 	switch DataType(respType) {
 	case array:
-		deserializeArray(reader)
+		return deserializeArray(reader)
 	}
 	return nil
 
