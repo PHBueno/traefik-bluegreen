@@ -15,7 +15,8 @@ var (
 type RedisStore struct {
 	address string
 	port    string
-	cache   map[string]map[string]string
+	cache   map[string]*TenantSlot
+	mu      sync.RWMutex
 }
 
 /*
@@ -35,11 +36,10 @@ type TenantSlot struct {
 func NewConnection(address string, port string) *RedisStore {
 	once.Do(
 		func() {
-			fmt.Fprintln(os.Stdout, "[ONCE] => Executando Once")
 			store = &RedisStore{
 				address: address,
 				port:    port,
-				cache:   make(map[string]map[string]string),
+				cache:   make(map[string]*TenantSlot),
 			}
 		},
 	)
@@ -60,7 +60,9 @@ func (rs *RedisStore) GetSlot(tenant string, app string) *TenantSlot {
 }
 
 func (rs *RedisStore) getCachedSlot(tenant string, app string) (*TenantSlot, error) {
+	rs.mu.RLock() // Protege a leitura do cache permitindo multiplas leituras
 	tenantData, tenantExists := rs.cache[fmt.Sprintf("%s-%s", tenant, app)]
+	rs.mu.RUnlock()
 
 	if !tenantExists {
 		fmt.Fprintln(os.Stderr, "[REDIS CACHE] => valor não encontrado no cache")
@@ -70,19 +72,21 @@ func (rs *RedisStore) getCachedSlot(tenant string, app string) (*TenantSlot, err
 	fmt.Fprintln(os.Stdout, "[REDIS CACHE] => valor encontrado no cache")
 
 	return &TenantSlot{
-		TenantID: tenantData["tenantID"],
-		AppName:  tenantData["appName"],
-		Slot:     tenantData["slot"],
+		TenantID: tenantData.TenantID,
+		AppName:  tenantData.AppName,
+		Slot:     tenantData.Slot,
 	}, nil
 }
 
 func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, error) {
-	_, err := net.Dial("tcp", net.JoinHostPort(rs.address, rs.port))
+	conn, err := net.Dial("tcp", net.JoinHostPort(rs.address, rs.port))
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "[REDIS CONNECTION] => erro para conectar ao redis: ", err)
 		return nil, err
 	}
+
+	defer conn.Close()
 
 	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => conexão estabelecida com sucesso")
 	rs.updateCache(tenant, app, "1")
@@ -96,10 +100,13 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 }
 
 func (rs *RedisStore) updateCache(tenant string, app string, slot string) {
-	rs.cache[fmt.Sprintf("%s-%s", tenant, app)] = map[string]string{
-		"tenantID": tenant,
-		"appName":  app,
-		"slot":     slot,
+	rs.mu.Lock() // Protege escrita do cache
+	rs.cache[fmt.Sprintf("%s-%s", tenant, app)] = &TenantSlot{
+		TenantID: tenant,
+		AppName:  app,
+		Slot:     slot,
 	}
+	rs.mu.Unlock()
+
 	fmt.Fprintln(os.Stdout, "[REDIS CACHE] => cache atualizado com sucesso!")
 }
