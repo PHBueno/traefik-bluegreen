@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strconv"
 	"sync"
 )
 
@@ -86,13 +85,13 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 
 	reader := bufio.NewReader(conn)
 	resp, err := reader.ReadString('\n')
-	d := resp[:len(resp)-2]
-	arrayLenth, _ := strconv.ParseInt(d, 10, 64)
+	//d := resp[:len(resp)-2]
+	// arrayLenth, _ := strconv.ParseInt(d, 10, 64)
 
-	for i := range arrayLenth {
-		resp, _ = reader.ReadString('\n')
-		fmt.Fprintf(os.Stdout, "LINHA REDIS [%d]: %s\n", i, resp[:len(resp)-2])
-	}
+	// for i := range arrayLenth {
+	// 	resp, _ = reader.ReadString('\n')
+	// 	fmt.Fprintf(os.Stdout, "LINHA REDIS [%d]: %s\n", i, resp[:len(resp)-2])
+	// }
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "[REDIS CONNECTION] => erro na resposta do redis: ", err)
