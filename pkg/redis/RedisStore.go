@@ -19,14 +19,6 @@ type RedisStore struct {
 	mu      sync.RWMutex
 }
 
-/*
-	123-nginx: {
-	  tenantID: 123
-	  appName: nginx
-	  slot: 1
-	}
-*/
-
 type TenantSlot struct {
 	TenantID string
 	AppName  string
@@ -61,7 +53,7 @@ func (rs *RedisStore) GetSlot(tenant string, app string) *TenantSlot {
 
 func (rs *RedisStore) getCachedSlot(tenant string, app string) (*TenantSlot, error) {
 	rs.mu.RLock() // Protege a leitura do cache permitindo multiplas leituras
-	tenantData, tenantExists := rs.cache[fmt.Sprintf("%s-%s", tenant, app)]
+	tenantData, tenantExists := rs.cache[fmt.Sprintf("%s:%s", tenant, app)]
 	rs.mu.RUnlock()
 
 	if !tenantExists {
@@ -86,7 +78,9 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 		return nil, err
 	}
 
-	defer conn.Close()
+	defer conn.Close() // fecha a conexão após o retorno da função.
+
+	HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
 
 	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => conexão estabelecida com sucesso")
 	rs.updateCache(tenant, app, "1")
@@ -101,7 +95,7 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 
 func (rs *RedisStore) updateCache(tenant string, app string, slot string) {
 	rs.mu.Lock() // Protege escrita do cache
-	rs.cache[fmt.Sprintf("%s-%s", tenant, app)] = &TenantSlot{
+	rs.cache[fmt.Sprintf("%s:%s", tenant, app)] = &TenantSlot{
 		TenantID: tenant,
 		AppName:  app,
 		Slot:     slot,
