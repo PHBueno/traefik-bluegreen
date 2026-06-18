@@ -90,6 +90,6 @@ func (rs *RedisStore) updateCache(tenant string, app string, slot string) {
 		"appName":  app,
 		"slot":     slot,
 	}
-	fmt.Println(rs.cache)
+	fmt.Fprintln(os.Stdout, rs.cache)
 	fmt.Fprintln(os.Stdout, "[REDIS CACHE] => cache atualizado com sucesso!")
 }
