@@ -10,7 +10,7 @@ import (
 func HGetAll(conn net.Conn, key string) error {
 	var stringBuilder strings.Builder
 
-	stringBuilder.WriteString(fmt.Sprintf("*2\r\n$7\r\nHGETALL\r\n$%d\r\n%s\r\n", len(key), key))
+	fmt.Fprintf(&stringBuilder, "*2\r\n$7\r\nHGETALL\r\n$%d\r\n%s\r\n", len(key), key)
 
 	_, err := conn.Write([]byte(stringBuilder.String()))
 

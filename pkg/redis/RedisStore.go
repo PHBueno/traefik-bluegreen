@@ -1,12 +1,12 @@
 package redis
 
 import (
-	"bufio"
 	"fmt"
 	"net"
 	"os"
-	"strconv"
 	"sync"
+
+	"github.com/PHBueno/traefik-bluegreen/pkg/redis/models"
 )
 
 var (
@@ -17,14 +17,8 @@ var (
 type RedisStore struct {
 	address string
 	port    string
-	cache   map[string]*TenantSlot
+	cache   map[string]*models.TenantSlot
 	mu      sync.RWMutex
-}
-
-type TenantSlot struct {
-	TenantID string
-	AppName  string
-	Slot     string
 }
 
 func NewConnection(address string, port string) *RedisStore {
@@ -33,7 +27,7 @@ func NewConnection(address string, port string) *RedisStore {
 			store = &RedisStore{
 				address: address,
 				port:    port,
-				cache:   make(map[string]*TenantSlot),
+				cache:   make(map[string]*models.TenantSlot),
 			}
 		},
 	)
@@ -41,7 +35,7 @@ func NewConnection(address string, port string) *RedisStore {
 
 }
 
-func (rs *RedisStore) GetSlot(tenant string, app string) *TenantSlot {
+func (rs *RedisStore) GetSlot(tenant string, app string) *models.TenantSlot {
 	fmt.Fprintln(os.Stdout, rs.cache)
 	tenantSlot, err := rs.getCachedSlot(tenant, app)
 
@@ -53,7 +47,7 @@ func (rs *RedisStore) GetSlot(tenant string, app string) *TenantSlot {
 
 }
 
-func (rs *RedisStore) getCachedSlot(tenant string, app string) (*TenantSlot, error) {
+func (rs *RedisStore) getCachedSlot(tenant string, app string) (*models.TenantSlot, error) {
 	rs.mu.RLock() // Protege a leitura do cache permitindo multiplas leituras
 	tenantData, tenantExists := rs.cache[fmt.Sprintf("%s:%s", tenant, app)]
 	rs.mu.RUnlock()
@@ -65,14 +59,14 @@ func (rs *RedisStore) getCachedSlot(tenant string, app string) (*TenantSlot, err
 
 	fmt.Fprintln(os.Stdout, "[REDIS CACHE] => valor encontrado no cache")
 
-	return &TenantSlot{
+	return &models.TenantSlot{
 		TenantID: tenantData.TenantID,
 		AppName:  tenantData.AppName,
 		Slot:     tenantData.Slot,
 	}, nil
 }
 
-func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, error) {
+func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlot, error) {
 	conn, err := net.Dial("tcp", net.JoinHostPort(rs.address, rs.port))
 
 	if err != nil {
@@ -84,28 +78,28 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => conexão estabelecida com sucesso")
 	HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
 
-	reader := bufio.NewReader(conn)
-	resp, err := reader.ReadString('\n')
-	d := resp[1 : len(resp)-2]
-	arrayLength, err := strconv.Atoi(d)
+	Deserializer(conn)
+	// resp, err := reader.ReadString('\n')
+	// d := resp[1 : len(resp)-2]
+	// arrayLength, err := strconv.Atoi(d)
 
-	fmt.Printf("d=%q length=%d err=%v\n", d, arrayLength, err)
+	// fmt.Printf("d=%q length=%d err=%v\n", d, arrayLength, err)
 
-	for i := 0; i <= arrayLength; i++ {
-		resp, _ = reader.ReadString('\n')
-		fmt.Fprintf(os.Stdout, "LINHA REDIS [%d]: %s\n", i, resp[:len(resp)-2])
-	}
+	// for i := 0; i <= arrayLength; i++ {
+	// 	resp, _ = reader.ReadString('\n')
+	// 	fmt.Fprintf(os.Stdout, "LINHA REDIS [%d]: %s\n", i, resp[:len(resp)-2])
+	// }
 
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "[REDIS CONNECTION] => erro na resposta do redis: ", err)
-		return nil, err
-	}
+	// if err != nil {
+	// 	fmt.Fprintln(os.Stderr, "[REDIS CONNECTION] => erro na resposta do redis: ", err)
+	// 	return nil, err
+	// }
 
-	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => MENSAGEM DO REDIS: ", resp)
+	//fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => MENSAGEM DO REDIS: ", resp)
 
 	rs.updateCache(tenant, app, "1")
 
-	return &TenantSlot{
+	return &models.TenantSlot{
 		TenantID: "ID",
 		AppName:  "appName",
 		Slot:     "1",
@@ -115,7 +109,7 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 
 func (rs *RedisStore) updateCache(tenant string, app string, slot string) {
 	rs.mu.Lock() // Protege escrita do cache
-	rs.cache[fmt.Sprintf("%s:%s", tenant, app)] = &TenantSlot{
+	rs.cache[fmt.Sprintf("%s:%s", tenant, app)] = &models.TenantSlot{
 		TenantID: tenant,
 		AppName:  app,
 		Slot:     slot,
