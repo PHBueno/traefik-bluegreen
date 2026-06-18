@@ -29,6 +29,7 @@ type TenantSlot struct {
 }
 
 func NewConnection(address string, port string) *RedisStore {
+	fmt.Fprintln(os.Stdout, "[REDISSTORE] => Criando NewRedisConnection")
 	return &RedisStore{
 		address: address,
 		port:    port,
@@ -38,6 +39,7 @@ func NewConnection(address string, port string) *RedisStore {
 }
 
 func (rs *RedisStore) GetSlot(tenant string, app string) *TenantSlot {
+	fmt.Fprintln(os.Stdout, rs.cache)
 	tenantSlot, err := rs.getCachedSlot(tenant, app)
 
 	if err != nil {
@@ -90,6 +92,5 @@ func (rs *RedisStore) updateCache(tenant string, app string, slot string) {
 		"appName":  app,
 		"slot":     slot,
 	}
-	fmt.Fprintln(os.Stdout, rs.cache)
 	fmt.Fprintln(os.Stdout, "[REDIS CACHE] => cache atualizado com sucesso!")
 }
