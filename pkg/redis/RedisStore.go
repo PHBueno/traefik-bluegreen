@@ -86,7 +86,7 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 
 	reader := bufio.NewReader(conn)
 	resp, err := reader.ReadString('\n')
-	d := resp[:len(resp)-2]
+	d := resp[1 : len(resp)-2]
 	arrayLength, err := strconv.Atoi(d)
 
 	fmt.Printf("d=%q length=%d err=%v\n", d, arrayLength, err)
