@@ -21,6 +21,7 @@ type RedisStore struct {
 	  slot: 1
 	}
 */
+
 type TenantSlot struct {
 	TenantID string
 	AppName  string
@@ -55,6 +56,8 @@ func (rs *RedisStore) getCachedSlot(tenant string, app string) (*TenantSlot, err
 		return nil, fmt.Errorf("valor não encontrado no cache!")
 	}
 
+	fmt.Fprintln(os.Stdout, "[REDIS CACHE] => valor encontrado no cache")
+
 	return &TenantSlot{
 		TenantID: tenantData["tenantID"],
 		AppName:  tenantData["appName"],
@@ -71,10 +74,22 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 	}
 
 	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => conexão estabelecida com sucesso")
+	rs.updateCache(tenant, app, "1")
+
 	return &TenantSlot{
 		TenantID: "ID",
 		AppName:  "appName",
 		Slot:     "1",
 	}, nil
 
+}
+
+func (rs *RedisStore) updateCache(tenant string, app string, slot string) {
+	rs.cache[fmt.Sprintf("%s-%s", tenant, app)] = map[string]string{
+		"tenantID": tenant,
+		"appName":  app,
+		"slot":     slot,
+	}
+
+	fmt.Fprintln(os.Stdout, "[REDIS CACHE] => cache atualizado com sucesso!")
 }
