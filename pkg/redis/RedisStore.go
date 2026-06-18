@@ -87,9 +87,11 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 	reader := bufio.NewReader(conn)
 	resp, err := reader.ReadString('\n')
 	d := resp[:len(resp)-2]
-	arrayLenth, _ := strconv.Atoi(d)
+	arrayLength, err := strconv.Atoi(d)
 
-	for i := 0; i <= arrayLenth; i++ {
+	fmt.Printf("d=%q length=%d err=%v\n", d, arrayLength, err)
+
+	for i := 0; i <= arrayLength; i++ {
 		resp, _ = reader.ReadString('\n')
 		fmt.Fprintf(os.Stdout, "LINHA REDIS [%d]: %s\n", i, resp[:len(resp)-2])
 	}
