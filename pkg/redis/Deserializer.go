@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 )
 
 type DataType byte
@@ -25,9 +26,29 @@ func getRedisRESP(rd *bufio.Reader) ([]byte, error) {
 
 }
 
-func deserializeArray(rd *bufio.Reader) {
-	d, _ := getRedisRESP(rd)
-	fmt.Fprintf(os.Stdout, "RETORNO:  %s\n", d)
+func deserializeArray(rd *bufio.Reader) error {
+	returnBytes, _ := getRedisRESP(rd)
+	returnBytesToInt, err := strconv.Atoi(string(returnBytes))
+
+	if err != nil {
+		fmt.Fprintln(os.Stdout, "erro na conversão de tipo: ", err)
+		return err
+	}
+
+	for i := range returnBytesToInt {
+		// Ignora tamanho do Campo
+		rd.ReadString('\n')
+
+		field, _ := rd.ReadString('\n')
+
+		// Ignora tamanho do valor
+		rd.ReadString('\n')
+
+		value, _ := rd.ReadString('\n')
+
+		fmt.Fprintln(os.Stdout, "[%d] %s => %s", i, field, value)
+
+	}
 
 }
 
