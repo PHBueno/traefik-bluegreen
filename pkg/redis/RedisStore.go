@@ -37,9 +37,11 @@ func NewConnection(address string, port string) *RedisStore {
 
 func (rs *RedisStore) GetSlot(tenant string, app string) *models.TenantSlot {
 	fmt.Fprintln(os.Stdout, rs.cache)
+	// tenta buscar do cache
 	tenantSlot, err := rs.getCachedSlot(tenant, app)
 
 	if err != nil {
+		// se não existir cache, busca do redis
 		tenantSlot, _ = rs.getRedisSlot(tenant, app)
 	}
 
@@ -47,6 +49,7 @@ func (rs *RedisStore) GetSlot(tenant string, app string) *models.TenantSlot {
 
 }
 
+// Busca valores do Cache
 func (rs *RedisStore) getCachedSlot(tenant string, app string) (*models.TenantSlot, error) {
 	rs.mu.RLock() // Protege a leitura do cache permitindo multiplas leituras
 	tenantData, tenantExists := rs.cache[fmt.Sprintf("%s:%s", tenant, app)]
@@ -66,6 +69,7 @@ func (rs *RedisStore) getCachedSlot(tenant string, app string) (*models.TenantSl
 	}, nil
 }
 
+// Busca valores do Redis
 func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlot, error) {
 	conn, err := net.Dial("tcp", net.JoinHostPort(rs.address, rs.port))
 
@@ -78,35 +82,14 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlo
 	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => conexão estabelecida com sucesso")
 	HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
 
-	Deserializer(conn)
-	// resp, err := reader.ReadString('\n')
-	// d := resp[1 : len(resp)-2]
-	// arrayLength, err := strconv.Atoi(d)
+	tenantModel, _ := Deserializer(conn)
 
-	// fmt.Printf("d=%q length=%d err=%v\n", d, arrayLength, err)
+	rs.updateCache(tenant, app, tenantModel.Slot)
 
-	// for i := 0; i <= arrayLength; i++ {
-	// 	resp, _ = reader.ReadString('\n')
-	// 	fmt.Fprintf(os.Stdout, "LINHA REDIS [%d]: %s\n", i, resp[:len(resp)-2])
-	// }
-
-	// if err != nil {
-	// 	fmt.Fprintln(os.Stderr, "[REDIS CONNECTION] => erro na resposta do redis: ", err)
-	// 	return nil, err
-	// }
-
-	//fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => MENSAGEM DO REDIS: ", resp)
-
-	rs.updateCache(tenant, app, "1")
-
-	return &models.TenantSlot{
-		TenantID: "ID",
-		AppName:  "appName",
-		Slot:     "1",
-	}, nil
-
+	return tenantModel, nil
 }
 
+// Atualiza Cache
 func (rs *RedisStore) updateCache(tenant string, app string, slot string) {
 	rs.mu.Lock() // Protege escrita do cache
 	rs.cache[fmt.Sprintf("%s:%s", tenant, app)] = &models.TenantSlot{

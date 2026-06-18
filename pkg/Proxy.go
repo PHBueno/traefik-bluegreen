@@ -23,14 +23,9 @@ func (p *Proxy) RewriteProxy() func(*httputil.ProxyRequest) {
 		tenant := pr.In.URL.Query().Get("tenant")
 		app := pr.In.Header.Get("X-App-Slug")
 
-		slot := p.RedisConn.GetSlot(tenant, app)
+		tenantModel := p.RedisConn.GetSlot(tenant, app)
 
-		switch tenant {
-		case "456":
-			pr.Out.Header.Set("X-Slot", slot.Slot)
-		default:
-			pr.Out.Header.Set("X-Slot", slot.Slot)
-		}
+		pr.Out.Header.Set("X-Slot", tenantModel.Slot)
 
 		pr.SetXForwarded()
 
