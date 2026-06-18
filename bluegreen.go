@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/PHBueno/traefik-bluegreen/pkg"
+	"github.com/PHBueno/traefik-bluegreen/pkg/redis"
 )
 
 type Config struct {
@@ -33,6 +34,14 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return nil, err
+	}
+
+	redis := &redis.RedisConn{Address: config.RedisAddress, Port: config.RedisPort}
+
+	_, err = redis.NewConnection()
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 	}
 
 	traefik := &pkg.Traefik{URL: traefikTarget}
