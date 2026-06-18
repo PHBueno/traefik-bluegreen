@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
@@ -79,10 +80,20 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*TenantSlot, erro
 	}
 
 	defer conn.Close() // fecha a conexão após o retorno da função.
-
+	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => conexão estabelecida com sucesso")
 	HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
 
-	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => conexão estabelecida com sucesso")
+	reader := bufio.NewReader(conn)
+
+	resp, err := reader.ReadString('\n')
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "[REDIS CONNECTION] => erro na resposta do redis: ", err)
+		return nil, err
+	}
+
+	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => MENSAGEM DO REDIS: ", resp)
+
 	rs.updateCache(tenant, app, "1")
 
 	return &TenantSlot{
