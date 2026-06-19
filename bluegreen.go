@@ -30,7 +30,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	if config.RedisAddress == "" || config.RedisPassword == "" {
+	if config.RedisAddress == "" || config.RedisPort == "" {
 		slog.Error("[REDIS CONFIG] The Redis address or port has not been set")
 		return nil, fmt.Errorf("[REDIS CONFIG] The Redis address or port has not been set")
 	}
@@ -62,12 +62,3 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 	return bg, nil
 }
-
-// TODO:
-// Se a requisição não vier com app-id, deve ser encaminhado para o um Default;
-// Se não vier tenant, tem que buscar pela app Default;
-// definir uma espécie de Default Backend;
-
-// Cenários onde não vier o app-id;
-// Cenários onde não vier o tenant;
-// Cenários onde não vier nem o app-id e nem o tenant-id;

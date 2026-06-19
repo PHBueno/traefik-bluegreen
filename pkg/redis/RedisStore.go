@@ -19,7 +19,7 @@ var (
 type RedisStore struct {
 	address string
 	port    string
-	cache   map[string]*models.TenantSlot
+	cache   map[string]*models.TenantSlot // TODO: Adicionar invalidação do Cache
 	mu      sync.RWMutex
 }
 

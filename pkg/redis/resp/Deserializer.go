@@ -13,7 +13,8 @@ import (
 type DataType byte
 
 const (
-	array DataType = '*'
+	Array DataType = '*'
+	Error DataType = '-'
 )
 
 func getRedisRESP(rd *bufio.Reader) ([]byte, error) {
@@ -99,9 +100,10 @@ func Deserializer(rd io.Reader) (*models.TenantSlot, error) {
 	}
 
 	switch DataType(respType) {
-	case array:
+	case Array:
 		return deserializeArray(reader)
-	// Implementar retorno default
+	// TODO: Implementar retorno para error na resposta do Redis
+	// TODO: Implementar retorno default
 	default:
 		return nil, nil
 	}
