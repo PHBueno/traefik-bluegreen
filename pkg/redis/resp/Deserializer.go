@@ -20,7 +20,7 @@ func getRedisRESP(rd *bufio.Reader) ([]byte, error) {
 	resp, err := rd.ReadBytes('\n')
 
 	if err != nil {
-		slog.Error("erro na resposta do redis", "error", err)
+		slog.Error("[REDIS OPERATION] erro na resposta do redis", "error", err)
 		return nil, err
 	}
 
@@ -32,13 +32,13 @@ func readBulkString(rd *bufio.Reader) (string, error) {
 	_, err := rd.ReadString('\n')
 
 	if err != nil {
-		slog.Error("erro na leitura de valores vindos do Redis", "error", err)
+		slog.Error("[REDIS OPERATION] erro na leitura de valores vindos do Redis", "error", err)
 		return "", err
 	}
 
 	value, err := rd.ReadString('\n')
 	if err != nil {
-		slog.Error("erro na leitura de valores vindos do Redis", "error", err)
+		slog.Error("[REDIS OPERATION] erro na leitura de valores vindos do Redis", "error", err)
 		return "", err
 	}
 
@@ -74,7 +74,7 @@ func deserializeArray(rd *bufio.Reader) (*models.TenantSlot, error) {
 	for i := 0; i < returnBytesToInt/2; i++ {
 		field, value, err := readPair(rd)
 		if err != nil {
-			slog.Error("erro na leitura de valores vindos do Redis", "error", err)
+			slog.Error("[REDIS OPERATION] erro na leitura de valores vindos do Redis", "error", err)
 			return nil, err
 		}
 

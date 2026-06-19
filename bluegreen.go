@@ -26,12 +26,13 @@ func CreateConfig() *Config {
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	if config.RedisAddress == "" {
-		slog.Error("Redis Address is not set!")
-		return nil, fmt.Errorf("Redis Address is not set!")
+	if config.RedisAddress == "" || config.RedisPassword == "" {
+		slog.Error("[REDIS CONFIG] The Redis address or port has not been set")
+		return nil, fmt.Errorf("[REDIS CONFIG] The Redis address or port has not been set")
 	}
 
 	traefikTarget, err := url.Parse("https://traefik.traefik-controller.svc.cluster.local:443")
