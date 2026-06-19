@@ -12,33 +12,42 @@ import (
 )
 
 var (
-	store *RedisStore
+	cache *localCache
 	once  sync.Once
 )
 
 type RedisStore struct {
-	address string
-	port    string
-	cache   map[string]*models.TenantSlot // TODO: Adicionar invalidação do Cache
-	mu      sync.RWMutex
+	address    string
+	port       string
+	localCache *localCache // TODO: Adicionar invalidação do Cache
+	mu         sync.RWMutex
 }
 
-func NewConnection(address string, port string) *RedisStore {
+type localCache struct {
+	cache map[string]*models.TenantSlot
+}
+
+func newLocalCache() *localCache {
 	once.Do(
 		func() {
-			store = &RedisStore{
-				address: address,
-				port:    port,
-				cache:   make(map[string]*models.TenantSlot),
+			cache = &localCache{
+				cache: make(map[string]*models.TenantSlot),
 			}
 		},
 	)
-	return store
+	return cache
+}
 
+func NewConnection(address string, port string) *RedisStore {
+	return &RedisStore{
+		address:    address,
+		port:       port,
+		localCache: newLocalCache(),
+	}
 }
 
 func (rs *RedisStore) GetSlot(tenant string, app string) *models.TenantSlot {
-	fmt.Fprintln(os.Stdout, rs.cache)
+	fmt.Fprintln(os.Stdout, rs.localCache)
 	// tenta buscar do cache
 	tenantSlot, err := rs.getCachedSlot(tenant, app)
 
@@ -54,7 +63,7 @@ func (rs *RedisStore) GetSlot(tenant string, app string) *models.TenantSlot {
 // Busca valores do Cache
 func (rs *RedisStore) getCachedSlot(tenant string, app string) (*models.TenantSlot, error) {
 	rs.mu.RLock() // Protege a leitura do cache permitindo multiplas leituras
-	tenantData, tenantExists := rs.cache[fmt.Sprintf("%s:%s", tenant, app)]
+	tenantData, tenantExists := rs.localCache.cache[fmt.Sprintf("%s:%s", tenant, app)]
 	rs.mu.RUnlock()
 
 	if !tenantExists {
@@ -94,7 +103,7 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlo
 // Atualiza Cache
 func (rs *RedisStore) updateCache(tenant string, app string, slot string) {
 	rs.mu.Lock() // Protege escrita do cache
-	rs.cache[fmt.Sprintf("%s:%s", tenant, app)] = &models.TenantSlot{
+	rs.localCache.cache[fmt.Sprintf("%s:%s", tenant, app)] = &models.TenantSlot{
 		TenantID: tenant,
 		AppName:  app,
 		Slot:     slot,
