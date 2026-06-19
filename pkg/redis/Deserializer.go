@@ -29,6 +29,38 @@ func getRedisRESP(rd *bufio.Reader) ([]byte, error) {
 
 }
 
+func readBulkString(rd *bufio.Reader) (string, error) {
+	_, err := rd.ReadString('\n')
+
+	if err != nil {
+		fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
+		return "", err
+	}
+
+	value, err := rd.ReadString('\n')
+	if err != nil {
+		fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
+		return "", err
+	}
+
+	return strings.TrimSpace(value), nil
+
+}
+
+func readPair(rd *bufio.Reader) (string, string, error) {
+	field, err := readBulkString(rd)
+	if err != nil {
+		return "", "", err
+	}
+
+	value, err := readBulkString(rd)
+	if err != nil {
+		return "", "", err
+	}
+
+	return field, value, nil
+}
+
 func deserializeArray(rd *bufio.Reader) (*models.TenantSlot, error) {
 	returnBytes, _ := getRedisRESP(rd)
 	returnBytesToInt, err := strconv.Atoi(string(returnBytes))
@@ -41,26 +73,33 @@ func deserializeArray(rd *bufio.Reader) (*models.TenantSlot, error) {
 	tenantMap := make(map[string]string)
 
 	for i := 0; i < returnBytesToInt/2; i++ {
+		field, value, err := readPair(rd)
+		if err != nil {
+			fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
+			return nil, err
+		}
 		// Ignora tamanho do Campo
-		rd.ReadString('\n')
+		// rd.ReadString('\n')
 
-		field, err := rd.ReadString('\n')
-		if err != nil {
-			fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
-			return nil, err
-		}
+		// field, err := rd.ReadString('\n')
+		// if err != nil {
+		// 	fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
+		// 	return nil, err
+		// }
 
-		// Ignora tamanho do valor
-		rd.ReadString('\n')
+		// // Ignora tamanho do valor
+		// rd.ReadString('\n')
 
-		value, err := rd.ReadString('\n')
-		if err != nil {
-			fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
-			return nil, err
-		}
+		// value, err := rd.ReadString('\n')
+		// if err != nil {
+		// 	fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
+		// 	return nil, err
+		// }
 
-		tenantMap[strings.TrimSpace(field)] = strings.TrimSpace(value)
+		tenantMap[field] = value
 	}
+
+	fmt.Fprintln(os.Stdout, tenantMap)
 
 	return &models.TenantSlot{
 		TenantID: tenantMap["tenant"],

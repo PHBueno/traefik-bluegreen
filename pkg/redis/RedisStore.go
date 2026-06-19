@@ -80,8 +80,10 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlo
 
 	defer conn.Close() // fecha a conexão após o retorno da função.
 	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => conexão estabelecida com sucesso")
+
 	HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
 
+	// Modificar para o Deserializer ser uma resposta do HGetAll
 	tenantModel, _ := Deserializer(conn)
 
 	rs.updateCache(tenant, app, tenantModel.Slot)
