@@ -5,44 +5,23 @@ import (
 	"log/slog"
 	"net"
 	"os"
-	"sync"
 
+	"github.com/PHBueno/traefik-bluegreen/pkg/redis/cache"
 	"github.com/PHBueno/traefik-bluegreen/pkg/redis/commands"
 	"github.com/PHBueno/traefik-bluegreen/pkg/redis/models"
-)
-
-var (
-	cache *localCache
-	once  sync.Once
 )
 
 type RedisStore struct {
 	address    string
 	port       string
-	localCache *localCache // TODO: Adicionar invalidação do Cache
-	mu         sync.RWMutex
-}
-
-type localCache struct {
-	cache map[string]*models.TenantSlot
-}
-
-func newLocalCache() *localCache {
-	once.Do(
-		func() {
-			cache = &localCache{
-				cache: make(map[string]*models.TenantSlot),
-			}
-		},
-	)
-	return cache
+	localCache *cache.LocalCache // TODO: Adicionar invalidação do Cache
 }
 
 func NewConnection(address string, port string) *RedisStore {
 	return &RedisStore{
 		address:    address,
 		port:       port,
-		localCache: newLocalCache(),
+		localCache: cache.NewLocalCache(),
 	}
 }
 
@@ -62,13 +41,10 @@ func (rs *RedisStore) GetSlot(tenant string, app string) *models.TenantSlot {
 
 // Busca valores do Cache
 func (rs *RedisStore) getCachedSlot(tenant string, app string) (*models.TenantSlot, error) {
-	rs.mu.RLock() // Protege a leitura do cache permitindo multiplas leituras
-	tenantData, tenantExists := rs.localCache.cache[fmt.Sprintf("%s:%s", tenant, app)]
-	rs.mu.RUnlock()
+	tenantData, err := rs.localCache.GetTenant(fmt.Sprintf("%s:%s", tenant, app))
 
-	if !tenantExists {
-		slog.Info("[REDIS CACHE] => valor não encontrado no cache")
-		return nil, fmt.Errorf("valor não encontrado no cache!")
+	if err != nil {
+		return nil, fmt.Errorf("[REDIS CACHE] => valor não encontrado no cache!")
 	}
 
 	slog.Info("[REDIS CACHE] => valor encontrado no cache")
@@ -102,13 +78,11 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlo
 
 // Atualiza Cache
 func (rs *RedisStore) updateCache(tenant string, app string, slot string) {
-	rs.mu.Lock() // Protege escrita do cache
-	rs.localCache.cache[fmt.Sprintf("%s:%s", tenant, app)] = &models.TenantSlot{
+	rs.localCache.SetTenant(&models.TenantSlot{
 		TenantID: tenant,
 		AppName:  app,
 		Slot:     slot,
-	}
-	rs.mu.Unlock()
+	})
 
 	slog.Info("[REDIS CACHE] => cache atualizado com sucesso!")
 }
