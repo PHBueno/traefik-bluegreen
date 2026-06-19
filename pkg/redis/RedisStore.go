@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"sync"
@@ -57,11 +58,11 @@ func (rs *RedisStore) getCachedSlot(tenant string, app string) (*models.TenantSl
 	rs.mu.RUnlock()
 
 	if !tenantExists {
-		fmt.Fprintln(os.Stderr, "[REDIS CACHE] => valor não encontrado no cache")
+		slog.Info("[REDIS CACHE] => valor não encontrado no cache")
 		return nil, fmt.Errorf("valor não encontrado no cache!")
 	}
 
-	fmt.Fprintln(os.Stdout, "[REDIS CACHE] => valor encontrado no cache")
+	slog.Info("[REDIS CACHE] => valor encontrado no cache")
 
 	return &models.TenantSlot{
 		TenantID: tenantData.TenantID,
@@ -75,12 +76,13 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlo
 	conn, err := net.Dial("tcp", net.JoinHostPort(rs.address, rs.port))
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "[REDIS CONNECTION] => erro para conectar ao redis: ", err)
+		slog.Error("[REDIS CONNECTION] => erro para conectar ao redis", "error", err)
 		return nil, err
 	}
 
 	defer conn.Close() // fecha a conexão após o retorno da função.
-	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => conexão estabelecida com sucesso")
+
+	slog.Info("[REDIS CONNECTION] => conexão estabelecida com sucesso")
 
 	tenantModel, _ := commands.HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
 
@@ -99,5 +101,5 @@ func (rs *RedisStore) updateCache(tenant string, app string, slot string) {
 	}
 	rs.mu.Unlock()
 
-	fmt.Fprintln(os.Stdout, "[REDIS CACHE] => cache atualizado com sucesso!")
+	slog.Info("[REDIS CACHE] => cache atualizado com sucesso!")
 }

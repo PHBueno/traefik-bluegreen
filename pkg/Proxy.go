@@ -1,10 +1,8 @@
 package pkg
 
 import (
-	"fmt"
 	"net/http/httputil"
 	"net/url"
-	"os"
 
 	"github.com/PHBueno/traefik-bluegreen/pkg/redis"
 )
@@ -28,10 +26,5 @@ func (p *Proxy) RewriteProxy() func(*httputil.ProxyRequest) {
 		pr.Out.Header.Set("X-Slot", tenantModel.Slot)
 
 		pr.SetXForwarded()
-
-		fmt.Fprintf(os.Stdout,
-			"Encaminhando requisição para o Traefik -> Host: %s | Headers: %s\n",
-			pr.Out.Host, pr.Out.Header,
-		)
 	}
 }

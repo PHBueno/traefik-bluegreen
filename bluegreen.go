@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -25,7 +26,11 @@ func CreateConfig() *Config {
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	if config.RedisAddress == "" {
+		slog.Error("Redis Address is not set!")
 		return nil, fmt.Errorf("Redis Address is not set!")
 	}
 
@@ -57,6 +62,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	return bg, nil
 }
 
+// TODO:
 // Se a requisição não vier com app-id, deve ser encaminhado para o um Default;
 // Se não vier tenant, tem que buscar pela app Default;
 // definir uma espécie de Default Backend;

@@ -2,9 +2,8 @@ package redis
 
 import (
 	"bufio"
-	"fmt"
 	"io"
-	"os"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -21,7 +20,7 @@ func getRedisRESP(rd *bufio.Reader) ([]byte, error) {
 	resp, err := rd.ReadBytes('\n')
 
 	if err != nil {
-		fmt.Fprintln(os.Stdout, "erro na resposta do redis: ", err)
+		slog.Error("erro na resposta do redis", "error", err)
 		return nil, err
 	}
 
@@ -33,13 +32,13 @@ func readBulkString(rd *bufio.Reader) (string, error) {
 	_, err := rd.ReadString('\n')
 
 	if err != nil {
-		fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
+		slog.Error("erro na leitura de valores vindos do Redis", "error", err)
 		return "", err
 	}
 
 	value, err := rd.ReadString('\n')
 	if err != nil {
-		fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
+		slog.Error("erro na leitura de valores vindos do Redis", "error", err)
 		return "", err
 	}
 
@@ -66,7 +65,7 @@ func deserializeArray(rd *bufio.Reader) (*models.TenantSlot, error) {
 	returnBytesToInt, err := strconv.Atoi(string(returnBytes))
 
 	if err != nil {
-		fmt.Fprintln(os.Stdout, "erro na conversão de tipo: ", err)
+		slog.Error("erro na conversão de tipo", "error", err)
 		return nil, err
 	}
 
@@ -75,14 +74,12 @@ func deserializeArray(rd *bufio.Reader) (*models.TenantSlot, error) {
 	for i := 0; i < returnBytesToInt/2; i++ {
 		field, value, err := readPair(rd)
 		if err != nil {
-			fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
+			slog.Error("erro na leitura de valores vindos do Redis", "error", err)
 			return nil, err
 		}
 
 		tenantMap[field] = value
 	}
-
-	fmt.Fprintln(os.Stdout, tenantMap)
 
 	return &models.TenantSlot{
 		TenantID: tenantMap["tenant"],
