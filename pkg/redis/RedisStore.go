@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/PHBueno/traefik-bluegreen/pkg/redis/commands"
 	"github.com/PHBueno/traefik-bluegreen/pkg/redis/models"
 )
 
@@ -81,10 +82,7 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlo
 	defer conn.Close() // fecha a conexão após o retorno da função.
 	fmt.Fprintln(os.Stdout, "[REDIS CONNECTION] => conexão estabelecida com sucesso")
 
-	HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
-
-	// Modificar para o Deserializer ser uma resposta do HGetAll
-	tenantModel, _ := Deserializer(conn)
+	tenantModel, _ := commands.HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
 
 	rs.updateCache(tenant, app, tenantModel.Slot)
 

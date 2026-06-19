@@ -78,23 +78,6 @@ func deserializeArray(rd *bufio.Reader) (*models.TenantSlot, error) {
 			fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
 			return nil, err
 		}
-		// Ignora tamanho do Campo
-		// rd.ReadString('\n')
-
-		// field, err := rd.ReadString('\n')
-		// if err != nil {
-		// 	fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
-		// 	return nil, err
-		// }
-
-		// // Ignora tamanho do valor
-		// rd.ReadString('\n')
-
-		// value, err := rd.ReadString('\n')
-		// if err != nil {
-		// 	fmt.Fprintln(os.Stdout, "erro na leitura de valores vindos do Redis: ", err)
-		// 	return nil, err
-		// }
 
 		tenantMap[field] = value
 	}
