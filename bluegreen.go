@@ -22,7 +22,9 @@ type Config struct {
 }
 
 func CreateConfig() *Config {
-	return &Config{}
+	return &Config{
+		RedisPort: "6379",
+	}
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
@@ -30,9 +32,9 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	if config.RedisAddress == "" || config.RedisPort == "" {
-		slog.Error("[REDIS CONFIG] The Redis address or port has not been set")
-		return nil, fmt.Errorf("[REDIS CONFIG] The Redis address or port has not been set")
+	if config.RedisAddress == "" {
+		slog.Error("[REDIS CONFIG] The Redis address has not been set")
+		return nil, fmt.Errorf("[REDIS CONFIG] The Redis address has not been set")
 	}
 
 	traefikTarget, err := url.Parse("https://traefik.traefik-controller.svc.cluster.local:443")
