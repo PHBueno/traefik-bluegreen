@@ -17,11 +17,12 @@ type RedisStore struct {
 	cacheTTL   int
 }
 
-func NewConnection(address string, port string) *RedisStore {
+func NewConnection(address string, port string, cacheTTL int) *RedisStore {
 	return &RedisStore{
 		address:    address,
 		port:       port,
 		localCache: cache.NewLocalCache(),
+		cacheTTL:   cacheTTL,
 	}
 }
 

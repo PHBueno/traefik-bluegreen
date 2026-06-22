@@ -47,7 +47,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		return nil, err
 	}
 
-	redisConn := redis.NewConnection(config.RedisAddress, config.RedisPort)
+	redisConn := redis.NewConnection(config.RedisAddress, config.RedisPort, config.CacheTTL)
 
 	targetProxy := &pkg.Proxy{
 		ProxyURL:  traefikTarget,
