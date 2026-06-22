@@ -90,6 +90,7 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlo
 	conn.Close() // fecha a conexão após o retorno da função.
 
 	rs.updateCache(tenant, app, tenantModel.Slot)
+	slog.Info("[REDIS CONNECTION] => conexão fechada com sucesso")
 
 	return tenantModel, nil
 }
