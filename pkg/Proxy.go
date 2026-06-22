@@ -19,14 +19,11 @@ func (p *Proxy) RewriteProxy() func(*httputil.ProxyRequest) {
 		pr.SetURL(p.ProxyURL)
 		pr.Out.Host = pr.In.Host
 
-		slog.Info("Chegou requisição", "host", pr.Out.Host)
-
 		tenant := pr.In.URL.Query().Get("tenant")
 		app := pr.In.Header.Get("X-App-Slug")
 
 		tenantModel, err := p.RedisConn.GetSlot(tenant, app)
-		slog.Info("Execução após o GetSlot")
-		slot := "-1"
+		slot := "-1" // Caso não encontre o valor no Redis nem no Cache
 
 		if err != nil {
 			slog.Error(err.Error())

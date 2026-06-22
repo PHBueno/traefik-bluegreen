@@ -28,10 +28,8 @@ func NewLocalCache() *LocalCache {
 
 // Escrita
 func (lc *LocalCache) SetTenant(tenant *models.TenantSlot, ttl int) {
-	slog.Info("Bloqueando demais escritas")
 	lc.mu.Lock()
 
-	slog.Info("escrevendo no cache")
 	lc.cache[fmt.Sprintf("%s:%s", tenant.TenantID, tenant.AppName)] = &cacheEntry{
 		tenant:    tenant,
 		expiresAt: time.Now().Add(time.Duration(ttl) * time.Second),
