@@ -26,6 +26,7 @@ func (p *Proxy) RewriteProxy() func(*httputil.ProxyRequest) {
 
 		if err != nil {
 			slog.Error(err.Error())
+			pr.Out.Header.Set("X-Slot", "-1")
 		}
 
 		pr.Out.Header.Set("X-Slot", tenantModel.Slot)
