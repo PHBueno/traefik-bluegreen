@@ -51,6 +51,7 @@ func (lc *LocalCache) SetTenant(tenant *models.TenantSlot, ttl int) {
 func (lc *LocalCache) GetTenant(Id string) (*models.TenantSlot, error) {
 	lc.mu.RLock()
 	entry, exists := lc.cache[Id]
+	lc.mu.RUnlock()
 
 	if !exists {
 		lc.mu.RUnlock()
@@ -59,12 +60,10 @@ func (lc *LocalCache) GetTenant(Id string) (*models.TenantSlot, error) {
 	}
 
 	if time.Now().After(entry.expiresAt) {
-		lc.mu.RUnlock()
-
 		lc.mu.Lock()
 
 		// Garante que não teve modificações concorrentes entre uma escrita e outra
-		if current, ok := lc.cache[Id]; ok && current == entry {
+		if current, ok := lc.cache[Id]; ok && current.expiresAt.Equal(entry.expiresAt) {
 			delete(lc.cache, Id)
 		}
 
@@ -74,12 +73,5 @@ func (lc *LocalCache) GetTenant(Id string) (*models.TenantSlot, error) {
 
 	}
 
-	tenant := entry.tenant
-	lc.mu.RUnlock()
-
-	return &models.TenantSlot{
-		TenantID: tenant.TenantID,
-		AppName:  tenant.AppName,
-		Slot:     tenant.Slot,
-	}, nil
+	return entry.tenant, nil
 }

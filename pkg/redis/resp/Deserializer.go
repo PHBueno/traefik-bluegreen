@@ -25,6 +25,8 @@ func getRedisRESP(rd *bufio.Reader) ([]byte, error) {
 		return nil, err
 	}
 
+	slog.Info("RETORNO REDIS", "resp", resp)
+
 	return resp[:len(resp)-2], nil // *6
 
 }
