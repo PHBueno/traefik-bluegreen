@@ -38,11 +38,13 @@ func NewLocalCache() *LocalCache {
 // Escrita
 func (lc *LocalCache) SetTenant(tenant *models.TenantSlot, ttl int) {
 	lc.mu.Lock()
-	defer lc.mu.Unlock()
+
 	lc.cache[fmt.Sprintf("%s:%s", tenant.TenantID, tenant.AppName)] = &cacheEntry{
 		tenant:    tenant,
 		expiresAt: time.Now().Add(time.Duration(ttl) * time.Second),
 	}
+
+	lc.mu.Unlock()
 }
 
 // Leitura
@@ -73,6 +75,8 @@ func (lc *LocalCache) GetTenant(Id string) (*models.TenantSlot, error) {
 		return nil, fmt.Errorf("cache inválido!")
 
 	}
+
+	lc.mu.RUnlock()
 
 	return tenant.tenant, nil
 }
