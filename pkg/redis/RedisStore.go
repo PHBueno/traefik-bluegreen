@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"os"
 
 	"github.com/PHBueno/traefik-bluegreen/pkg/redis/cache"
 	"github.com/PHBueno/traefik-bluegreen/pkg/redis/commands"
@@ -14,7 +13,8 @@ import (
 type RedisStore struct {
 	address    string
 	port       string
-	localCache *cache.LocalCache // TODO: Adicionar invalidação do Cache
+	localCache *cache.LocalCache
+	cacheTTL   int
 }
 
 func NewConnection(address string, port string) *RedisStore {
@@ -25,8 +25,18 @@ func NewConnection(address string, port string) *RedisStore {
 	}
 }
 
+func verifyEmpty(value string, defaultValue string) string {
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
 func (rs *RedisStore) GetSlot(tenant string, app string) *models.TenantSlot {
-	fmt.Fprintln(os.Stdout, rs.localCache)
+
+	tenant = verifyEmpty(tenant, "000000")
+	app = verifyEmpty(app, "default")
+
 	// tenta buscar do cache
 	tenantSlot, err := rs.getCachedSlot(tenant, app)
 
@@ -58,18 +68,15 @@ func (rs *RedisStore) getCachedSlot(tenant string, app string) (*models.TenantSl
 
 // Busca valores do Redis
 func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlot, error) {
-	conn, err := net.Dial("tcp", net.JoinHostPort(rs.address, rs.port))
+	conn, err := rs.redisConn()
 
 	if err != nil {
-		slog.Error("[REDIS CONNECTION] => erro para conectar ao redis", "error", err)
 		return nil, err
 	}
 
-	defer conn.Close() // fecha a conexão após o retorno da função.
-
 	slog.Info("[REDIS CONNECTION] => conexão estabelecida com sucesso")
 
-	tenantModel, _ := commands.HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
+	tenantModel, _ := commands.HGetAll(*conn, fmt.Sprintf("%s:%s", tenant, app))
 
 	rs.updateCache(tenant, app, tenantModel.Slot)
 
@@ -78,11 +85,26 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlo
 
 // Atualiza Cache
 func (rs *RedisStore) updateCache(tenant string, app string, slot string) {
-	rs.localCache.SetTenant(&models.TenantSlot{
-		TenantID: tenant,
-		AppName:  app,
-		Slot:     slot,
-	})
+	rs.localCache.SetTenant(
+		&models.TenantSlot{
+			TenantID: tenant,
+			AppName:  app,
+			Slot:     slot,
+		},
+		rs.cacheTTL,
+	)
 
 	slog.Info("[REDIS CACHE] => cache atualizado com sucesso!")
+}
+
+func (rs *RedisStore) redisConn() (*net.Conn, error) {
+	conn, err := net.Dial("tcp", net.JoinHostPort(rs.address, rs.port))
+
+	if err != nil {
+		slog.Error("[REDIS CONNECTION] => erro para conectar ao redis", "error", err)
+		return nil, err
+	}
+	defer conn.Close() // fecha a conexão após o retorno da função.
+
+	return &conn, nil
 }

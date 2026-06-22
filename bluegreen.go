@@ -19,14 +19,17 @@ type Config struct {
 	RedisPort     string
 	RedisPassword string
 	RedisDataBase string
+	CacheTTL      int
 }
 
 func CreateConfig() *Config {
 	return &Config{
 		RedisPort: "6379",
+		CacheTTL:  60,
 	}
 }
 
+// TODO: Testar middleware em diferentes HTTPRoutes
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
