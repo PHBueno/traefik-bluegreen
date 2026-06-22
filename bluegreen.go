@@ -31,7 +31,6 @@ func CreateConfig() *Config {
 
 // TODO: Testar middleware em diferentes HTTPRoutes
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
@@ -39,6 +38,8 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		slog.Error("[REDIS CONFIG] The Redis address has not been set")
 		return nil, fmt.Errorf("[REDIS CONFIG] The Redis address has not been set")
 	}
+
+	slog.Info("chamou o New", "name", name)
 
 	traefikTarget, err := url.Parse("https://traefik.traefik-controller.svc.cluster.local:443")
 
