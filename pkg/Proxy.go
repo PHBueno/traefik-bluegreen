@@ -19,6 +19,8 @@ func (p *Proxy) RewriteProxy() func(*httputil.ProxyRequest) {
 		pr.SetURL(p.ProxyURL)
 		pr.Out.Host = pr.In.Host
 
+		slog.Info("Chegou requisição", "host", pr.Out.Host)
+
 		tenant := pr.In.URL.Query().Get("tenant")
 		app := pr.In.Header.Get("X-App-Slug")
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
 	"strconv"
 	"strings"
 
@@ -26,8 +25,6 @@ func getRedisRESP(rd *bufio.Reader) ([]byte, error) {
 		slog.Error("[REDIS OPERATION] erro na resposta do redis", "error", err)
 		return nil, err
 	}
-
-	fmt.Fprintf(os.Stdout, "\n\nRAW BYTES: %q\n\n", resp)
 
 	return resp[:len(resp)-2], nil // *6
 
@@ -103,8 +100,6 @@ func Deserializer(rd io.Reader) (*models.TenantSlot, error) {
 	reader := bufio.NewReader(rd)
 
 	respType, err := reader.ReadByte()
-
-	fmt.Fprintf(os.Stdout, "\n\nRESP TYPE BYTES: %q\n\n", respType)
 
 	if err != nil {
 		return nil, err
