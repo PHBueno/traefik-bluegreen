@@ -99,6 +99,8 @@ func Deserializer(rd io.Reader) (*models.TenantSlot, error) {
 
 	respType, err := reader.ReadByte()
 
+	fmt.Fprintf(os.Stdout, "\n\nRESP TYPE BYTES: %q\n\n", respType)
+
 	if err != nil {
 		return nil, err
 	}
