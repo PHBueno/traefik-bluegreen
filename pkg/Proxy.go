@@ -24,12 +24,15 @@ func (p *Proxy) RewriteProxy() func(*httputil.ProxyRequest) {
 
 		tenantModel, err := p.RedisConn.GetSlot(tenant, app)
 
+		slot := -1
+
 		if err != nil {
 			slog.Error(err.Error())
-			pr.Out.Header.Set("X-Slot", "-1")
+		} else {
+			slot = tenantModel.Slot
 		}
 
-		pr.Out.Header.Set("X-Slot", tenantModel.Slot)
+		pr.Out.Header.Set("X-Slot", slot)
 
 		pr.SetXForwarded()
 	}
