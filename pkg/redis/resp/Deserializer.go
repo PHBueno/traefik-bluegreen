@@ -74,6 +74,11 @@ func deserializeArray(rd *bufio.Reader) (*models.TenantSlot, error) {
 		return nil, err
 	}
 
+	if returnBytesToInt == 0 {
+		slog.Error("[REDIS OPERATION] valor não encontrado no redis")
+		return nil, fmt.Errorf("valor não encontrado no redis")
+	}
+
 	tenantMap := make(map[string]string)
 
 	for i := 0; i < returnBytesToInt/2; i++ {

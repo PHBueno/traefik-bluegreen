@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"log/slog"
 	"net/http/httputil"
 	"net/url"
 
@@ -21,7 +22,11 @@ func (p *Proxy) RewriteProxy() func(*httputil.ProxyRequest) {
 		tenant := pr.In.URL.Query().Get("tenant")
 		app := pr.In.Header.Get("X-App-Slug")
 
-		tenantModel := p.RedisConn.GetSlot(tenant, app)
+		tenantModel, err := p.RedisConn.GetSlot(tenant, app)
+
+		if err != nil {
+			slog.Error(err.Error())
+		}
 
 		pr.Out.Header.Set("X-Slot", tenantModel.Slot)
 

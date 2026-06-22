@@ -33,7 +33,7 @@ func verifyEmpty(value string, defaultValue string) string {
 	return value
 }
 
-func (rs *RedisStore) GetSlot(tenant string, app string) *models.TenantSlot {
+func (rs *RedisStore) GetSlot(tenant string, app string) (*models.TenantSlot, error) {
 
 	tenant = verifyEmpty(tenant, "000000")
 	app = verifyEmpty(app, "default")
@@ -43,10 +43,14 @@ func (rs *RedisStore) GetSlot(tenant string, app string) *models.TenantSlot {
 
 	if err != nil {
 		// se não existir cache, busca do redis
-		tenantSlot, _ = rs.getRedisSlot(tenant, app)
+		tenantSlot, err = rs.getRedisSlot(tenant, app)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return tenantSlot
+	return tenantSlot, nil
 
 }
 
@@ -79,7 +83,11 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlo
 
 	slog.Info("[REDIS CONNECTION] => conexão estabelecida com sucesso")
 
-	tenantModel, _ := commands.HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
+	tenantModel, err := commands.HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
+
+	if err != nil {
+		return nil, err
+	}
 
 	rs.updateCache(tenant, app, tenantModel.Slot)
 
