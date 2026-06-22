@@ -82,15 +82,14 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlo
 	slog.Info("[REDIS CONNECTION] => conexão estabelecida com sucesso")
 
 	tenantModel, err := commands.HGetAll(conn, fmt.Sprintf("%s:%s", tenant, app))
+	conn.Close() // fecha a conexão após o retorno da função.
+	slog.Info("[REDIS CONNECTION] => conexão fechada com sucesso")
 
 	if err != nil {
 		return nil, err
 	}
 
-	conn.Close() // fecha a conexão após o retorno da função.
-
 	rs.updateCache(tenant, app, tenantModel.Slot)
-	slog.Info("[REDIS CONNECTION] => conexão fechada com sucesso")
 
 	return tenantModel, nil
 }
