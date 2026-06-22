@@ -25,6 +25,7 @@ func (p *Proxy) RewriteProxy() func(*httputil.ProxyRequest) {
 		app := pr.In.Header.Get("X-App-Slug")
 
 		tenantModel, err := p.RedisConn.GetSlot(tenant, app)
+		slog.Info("Execução após o GetSlot")
 		slot := "-1"
 
 		if err != nil {

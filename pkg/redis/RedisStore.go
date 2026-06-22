@@ -34,7 +34,7 @@ func verifyEmpty(value string, defaultValue string) string {
 }
 
 func (rs *RedisStore) GetSlot(tenant string, app string) (*models.TenantSlot, error) {
-
+	slog.Info("Iniciando buscas no cache ou redis")
 	tenant = verifyEmpty(tenant, "000000")
 	app = verifyEmpty(app, "default")
 
@@ -42,6 +42,7 @@ func (rs *RedisStore) GetSlot(tenant string, app string) (*models.TenantSlot, er
 	tenantSlot, err := rs.getCachedSlot(tenant, app)
 
 	if err != nil {
+		slog.Info("Valor não encontrado no cache")
 		// se não existir cache, busca do redis
 		tenantSlot, err = rs.getRedisSlot(tenant, app)
 
