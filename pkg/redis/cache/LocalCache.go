@@ -60,8 +60,9 @@ func (lc *LocalCache) GetTenant(Id string) (*models.TenantSlot, error) {
 		return nil, fmt.Errorf("valor não encontrado no cache!")
 	}
 
+	lc.mu.RUnlock()
+
 	if time.Now().After(entry.expiresAt) {
-		lc.mu.RUnlock()
 		lc.mu.Lock()
 
 		// Garante que não teve modificações concorrentes entre uma escrita e outra
