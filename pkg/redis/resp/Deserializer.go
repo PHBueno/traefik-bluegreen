@@ -2,8 +2,10 @@ package redis
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"strconv"
 	"strings"
 
@@ -25,7 +27,7 @@ func getRedisRESP(rd *bufio.Reader) ([]byte, error) {
 		return nil, err
 	}
 
-	slog.Info("RETORNO REDIS", "resp", resp[:len(resp)-2])
+	fmt.Fprintf(os.Stdout, "\n\nRAW BYTES: %q\n\n", resp)
 
 	return resp[:len(resp)-2], nil // *6
 
