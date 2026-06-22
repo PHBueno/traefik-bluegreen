@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"os"
 
 	"github.com/PHBueno/traefik-bluegreen/pkg/redis/cache"
 	"github.com/PHBueno/traefik-bluegreen/pkg/redis/commands"
@@ -34,6 +35,7 @@ func verifyEmpty(value string, defaultValue string) string {
 }
 
 func (rs *RedisStore) GetSlot(tenant string, app string) (*models.TenantSlot, error) {
+	fmt.Fprintf(os.Stdout)
 	slog.Info("Iniciando buscas no cache ou redis")
 	tenant = verifyEmpty(tenant, "000000")
 	app = verifyEmpty(app, "default")
