@@ -9,11 +9,6 @@ import (
 	"github.com/PHBueno/traefik-bluegreen/pkg/redis/models"
 )
 
-var (
-	cache *LocalCache
-	once  sync.Once
-)
-
 type cacheEntry struct {
 	tenant    *models.TenantSlot
 	expiresAt time.Time
@@ -25,14 +20,10 @@ type LocalCache struct {
 }
 
 func NewLocalCache() *LocalCache {
-	once.Do(
-		func() {
-			cache = &LocalCache{
-				cache: make(map[string]*cacheEntry),
-			}
-		},
-	)
-	return cache
+	return &LocalCache{
+		cache: make(map[string]*cacheEntry),
+	}
+
 }
 
 // Escrita
