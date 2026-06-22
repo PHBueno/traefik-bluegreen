@@ -50,7 +50,7 @@ func (lc *LocalCache) SetTenant(tenant *models.TenantSlot, ttl int) {
 // Leitura
 func (lc *LocalCache) GetTenant(Id string) (*models.TenantSlot, error) {
 	lc.mu.RLock()
-	tenant, exists := lc.cache[Id]
+	entry, exists := lc.cache[Id]
 
 	if !exists {
 		lc.mu.RUnlock()
@@ -58,15 +58,13 @@ func (lc *LocalCache) GetTenant(Id string) (*models.TenantSlot, error) {
 		return nil, fmt.Errorf("valor não encontrado no cache!")
 	}
 
-	if time.Now().After(tenant.expiresAt) {
+	if time.Now().After(entry.expiresAt) {
 		lc.mu.RUnlock()
 
 		lc.mu.Lock()
 
 		// Garante que não teve modificações concorrentes entre uma escrita e outra
-		if current, ok := lc.cache[Id]; ok &&
-			current == tenant &&
-			time.Now().After(current.expiresAt) {
+		if current, ok := lc.cache[Id]; ok && current == entry {
 			delete(lc.cache, Id)
 		}
 
@@ -76,7 +74,12 @@ func (lc *LocalCache) GetTenant(Id string) (*models.TenantSlot, error) {
 
 	}
 
+	tenant := entry.tenant
 	lc.mu.RUnlock()
 
-	return tenant.tenant, nil
+	return &models.TenantSlot{
+		TenantID: tenant.TenantID,
+		AppName:  tenant.AppName,
+		Slot:     tenant.Slot,
+	}, nil
 }
