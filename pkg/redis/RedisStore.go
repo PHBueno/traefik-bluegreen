@@ -90,7 +90,9 @@ func (rs *RedisStore) getRedisSlot(tenant string, app string) (*models.TenantSlo
 		return nil, err
 	}
 
+	slog.Info("escrevendo no cache interno")
 	rs.updateCache(tenant, app, tenantModel.Slot)
+	slog.Info("finalizada escrita no cache interno")
 
 	return tenantModel, nil
 }
