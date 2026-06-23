@@ -14,7 +14,7 @@ type BlueGreen struct {
 func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Evita loop
 	if req.Header.Get("X-Slot") != "" {
-		http.NotFound(rw, req)
+		bg.next.ServeHTTP(rw, req)
 		return
 	}
 
