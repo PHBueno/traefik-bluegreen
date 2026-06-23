@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"log/slog"
 	"net/http"
 	"net/http/httputil"
 )
@@ -12,9 +13,10 @@ type BlueGreen struct {
 }
 
 func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	slog.Info("requisição chegou", "req", req)
 	// Evita loop
 	if req.Header.Get("X-Slot") != "" {
-		bg.next.ServeHTTP(rw, req)
+		http.NotFound(rw, req)
 		return
 	}
 
