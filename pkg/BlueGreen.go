@@ -1,8 +1,10 @@
 package pkg
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httputil"
+	"os"
 )
 
 type BlueGreen struct {
@@ -13,6 +15,7 @@ type BlueGreen struct {
 
 func (bg *BlueGreen) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Evita loop
+	fmt.Fprintln(os.Stdout, "req", req)
 	if req.Header.Get("X-Slot") != "" {
 		http.NotFound(rw, req)
 		return
