@@ -26,18 +26,8 @@ func NewConnection(address string, port string, cacheTTL int) *RedisStore {
 	}
 }
 
-func verifyEmpty(value string, defaultValue string) string {
-	if value == "" {
-		return defaultValue
-	}
-	return value
-}
-
 func (rs *RedisStore) GetSlot(tenant string, app string) (*models.TenantSlot, error) {
 	slog.Info("Iniciando buscas no cache ou redis")
-
-	tenant = verifyEmpty(tenant, "000000")
-	app = verifyEmpty(app, "default")
 
 	// tenta buscar do cache
 	tenantSlot, err := rs.getCachedSlot(tenant, app)
